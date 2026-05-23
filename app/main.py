@@ -48,7 +48,7 @@ class Post(BaseModel):
     title: str
     content: str
     published: bool = True
-    rating: Optional[int]=None
+    #rating: Optional[int]=None
 
 
 @app.get("/")
@@ -97,7 +97,7 @@ async def get_post(id: int, response: Response, db: Session=Depends(get_db)):
     #cursor.execute("""SELECT * FROM posts WHERE id= %s """, (id,)) #using only psycopg driver
     #post=cursor.fetchone() #using only psycopg driver
     post=db.query(models.Post).filter(models.Post.id==id).first()
-    #print(post)-gives you the raw sql command behind thee above query
+    #print(post)-gives you the raw sql command behind the above query
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
         #response.status_code = status.HTTP_404_NOT_FOUND
@@ -105,24 +105,35 @@ async def get_post(id: int, response: Response, db: Session=Depends(get_db)):
     return {"data": post}
 
 
-@app.delete("/posts/{id}")
-async def delete_post(id: int, status_code=status.HTTP_204_NO_CONTENT):
-    cursor.execute("""DELETE FROM posts WHERE id=%s RETURNING *""", (id,))
-    deleted_post = cursor.fetchone()
-    conn.commit()
-    if deleted_post == None:
+@app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_post(id: int, db: Session=Depends(get_db)):
+    #cursor.execute("""DELETE FROM posts WHERE id=%s RETURNING *""", (id,))
+    #deleted_post = cursor.fetchone()
+    #conn.commit()
+
+    post = db.query(models.Post).filter(models.Post.id==id)
+    if post.first() == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"resource with id {id} not found")
     
+    post.delete(synchronize_session=False)
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
  
 
 @app.put("/posts/{id}")
-async def update_post(id: int, post: Post):
-    cursor.execute("""UPDATE posts SET (title, content, published) = (%s, %s, %s) WHERE id=%s RETURNING *""", (post.title, post.content, post.published, id))
-    updated_post = cursor.fetchone()
-    conn.commit()
-    if updated_post == None:
+async def update_post(id: int, updated_post: Post, db: Session=Depends(get_db)):
+    #cursor.execute("""UPDATE posts SET (title, content, published) = (%s, %s, %s) WHERE id=%s RETURNING *""", (post.title, #post.content, post.published, id))
+    #updated_post = cursor.fetchone()
+    #conn.commit()
+
+    post_query = db.query(models.Post).filter(models.Post.id==id)
+    post = post_query.first()
+
+    if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"resource with id {id} not found")
-    return {"data": updated_post}
+    
+    post_query.update(updated_post.dict(), synchronize_session=False)
+    db.commit()
+    return {"data": post_query.first()}
