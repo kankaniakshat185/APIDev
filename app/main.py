@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi import Body
-from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -9,7 +8,7 @@ import time
 from . import models #import all our models
 from sqlalchemy.orm import Session #import to create a session in our api endpoint
 from.database import engine, get_db
-
+from .schemas import PostBase, PostCreate, PostResponse
 models.Base.metadata.create_all(bind=engine) #creates the tables once the application restarts(if table not already there) and if its already there it doesnt do anything, sqlalchemy is not capable of updating tables and data
 
 
@@ -44,11 +43,7 @@ def find_post_index(id):
         if p['id']==id:
             return i
 
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-    #rating: Optional[int]=None
+
 
 
 @app.get("/")
@@ -68,20 +63,20 @@ async def root():
 
 #so we use sqlalchemy to abstractly create sql queies which are then run using psycopg (database driver)
 
-@app.get("/sqlalchemy")
+@app.get("/sqlalchemy") #test route 
 async def test_posts(db: Session = Depends(get_db)): #creates a session to the database using the defined function
     posts = db.query(models.Post).all()
-    return {"data": posts}
+    return posts
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[PostResponse])
 async def get_posts(db: Session=Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts""")
     # posts = cursor.fetchall()
     posts = db.query(models.Post).all()
-    return {"data" : posts}
+    return posts
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-async def create_posts(post: Post, db: Session=Depends(get_db)):
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
+async def create_posts(post: PostCreate, db: Session=Depends(get_db)):
     # cursor.execute("""INSERT INTO posts (title, content, published) VALUES(%s, %s, %s) RETURNING *""", ("hey this is a new post", "this is content for the new post", "true")) #never pass values directly to prevent sql injections
     # new_post = cursor.fetchone() #using only psycopg driver
     # conn.commit() #using only psycopg driver-commit the changes to make them persistant
@@ -90,9 +85,9 @@ async def create_posts(post: Post, db: Session=Depends(get_db)):
     db.commit() #commit the changes to make them persistant
     db.refresh(new_post) #refresh and add them back to the variable 
     print("Created and added new post")
-    return {"data": new_post}
+    return new_post
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=PostResponse)
 async def get_post(id: int, response: Response, db: Session=Depends(get_db)):
     #cursor.execute("""SELECT * FROM posts WHERE id= %s """, (id,)) #using only psycopg driver
     #post=cursor.fetchone() #using only psycopg driver
@@ -102,7 +97,7 @@ async def get_post(id: int, response: Response, db: Session=Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
         #response.status_code = status.HTTP_404_NOT_FOUND
         #return {"message": "requested resource not found"}
-    return {"data": post}
+    return post
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -121,8 +116,8 @@ async def delete_post(id: int, db: Session=Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
  
 
-@app.put("/posts/{id}")
-async def update_post(id: int, updated_post: Post, db: Session=Depends(get_db)):
+@app.put("/posts/{id}", response_model=PostResponse)
+async def update_post(id: int, updated_post: PostCreate, db: Session=Depends(get_db)):
     #cursor.execute("""UPDATE posts SET (title, content, published) = (%s, %s, %s) WHERE id=%s RETURNING *""", (post.title, #post.content, post.published, id))
     #updated_post = cursor.fetchone()
     #conn.commit()
@@ -136,4 +131,4 @@ async def update_post(id: int, updated_post: Post, db: Session=Depends(get_db)):
     
     post_query.update(updated_post.dict(), synchronize_session=False)
     db.commit()
-    return {"data": post_query.first()}
+    return post_query.first()
