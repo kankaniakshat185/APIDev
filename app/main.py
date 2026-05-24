@@ -8,7 +8,7 @@ import time
 from . import models #import all our models
 from sqlalchemy.orm import Session #import to create a session in our api endpoint
 from.database import engine, get_db
-from .schemas import PostBase, PostCreate, PostResponse
+from .schemas import PostBase, PostCreate, PostResponse, UserCreate, UserResponse
 models.Base.metadata.create_all(bind=engine) #creates the tables once the application restarts(if table not already there) and if its already there it doesnt do anything, sqlalchemy is not capable of updating tables and data
 
 
@@ -132,3 +132,14 @@ async def update_post(id: int, updated_post: PostCreate, db: Session=Depends(get
     post_query.update(updated_post.dict(), synchronize_session=False)
     db.commit()
     return post_query.first()
+
+
+
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
+async def create_user(post: UserCreate, db: Session=Depends(get_db)):
+    new_user = models.User(**post.dict()) #adding new user to database, use ** to unpack the dictionary
+    db.add(new_user) #stage the changes
+    db.commit() #commit the changes to make them persistant
+    db.refresh(new_user) #refresh and add them back to the variable 
+    print("Created and added new user")
+    return new_user
