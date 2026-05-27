@@ -9,7 +9,7 @@ import time
 from psycopg2.extras import RealDictCursor
 from .database import engine, get_db
 from sqlalchemy.orm import Session #import to create a session in our api endpoint
-from .routers import post, user
+from .routers import post, user, auth
 
 
 
@@ -79,4 +79,4 @@ async def test_posts(db: Session = Depends(get_db)): #creates a session to the d
 
 app.include_router(post.router)
 app.include_router(user.router)
-
+app.include_router(auth.router)
