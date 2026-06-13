@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from urllib.parse import quote_plus
 
-password = quote_plus("@k$#@!04")
+password = quote_plus("password123")
 
 #SQLALCHEMY_DATABASE_URL = 'postgresql://<username>:<password>@<ip-address/hostname>/<databse_name>' - the basic format of the url
 SQLALCHEMY_DATABASE_URL = f"postgresql://postgres:{password}@localhost/fastapi" #databse connection url using sqlalchemy

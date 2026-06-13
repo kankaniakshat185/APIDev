@@ -4,7 +4,7 @@ from typing import List
 from ..schemas import PostBase, PostCreate, PostResponse
 from ..database import get_db
 from sqlalchemy.orm.session import Session #import to create a session in our api endpoint
-from .. import models #import all our models
+from .. import models, oauth2 #import all our models
 
 router = APIRouter(
     prefix = "/posts",
@@ -19,7 +19,7 @@ async def get_posts(db: Session=Depends(get_db)):
     return posts
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
-async def create_posts(post: PostCreate, db: Session=Depends(get_db)):
+async def create_posts(post: PostCreate, db: Session=Depends(get_db), user: int=Depends(oauth2.get_current_user)):
     # cursor.execute("""INSERT INTO posts (title, content, published) VALUES(%s, %s, %s) RETURNING *""", ("hey this is a new post", "this is content for the new post", "true")) #never pass values directly to prevent sql injections
     # new_post = cursor.fetchone() #using only psycopg driver
     # conn.commit() #using only psycopg driver-commit the changes to make them persistant
@@ -44,7 +44,7 @@ async def get_post(id: int, response: Response, db: Session=Depends(get_db)):
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_post(id: int, db: Session=Depends(get_db)):
+async def delete_post(id: int, db: Session=Depends(get_db), user: int=Depends(oauth2.get_current_user)):
     #cursor.execute("""DELETE FROM posts WHERE id=%s RETURNING *""", (id,))
     #deleted_post = cursor.fetchone()
     #conn.commit()
@@ -60,7 +60,7 @@ async def delete_post(id: int, db: Session=Depends(get_db)):
  
 
 @router.put("/{id}", response_model=PostResponse)
-async def update_post(id: int, updated_post: PostCreate, db: Session=Depends(get_db)):
+async def update_post(id: int, updated_post: PostCreate, db: Session=Depends(get_db), user: int=Depends(oauth2.get_current_user)):
     #cursor.execute("""UPDATE posts SET (title, content, published) = (%s, %s, %s) WHERE id=%s RETURNING *""", (post.title, #post.content, post.published, id))
     #updated_post = cursor.fetchone()
     #conn.commit()
