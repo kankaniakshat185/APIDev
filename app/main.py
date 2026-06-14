@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends
 from . import models #import all our models
 from .database import engine, get_db
-from .database import engine, get_db
 from sqlalchemy.orm import Session #import to create a session in our api endpoint
 from .routers import post, user, auth
 
@@ -9,6 +8,8 @@ app = FastAPI()
 
 
 my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1}, {"title": "title of post 2", "content": "content of post 2", "id": 2}]
+
+models.Base.metadata.create_all(bind=engine) #creates the tables once the application restarts(if table not already there) and if its already there it doesnt do anything, sqlalchemy is not capable of updating tables and data
 
 def find_post(id):
     for p in my_posts:

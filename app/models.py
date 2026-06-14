@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey#required imports for defining th columns in our tables 
+from sqlalchemy import Column, String, Integer, Boolean, ForeignKey #required imports for defining th columns in our tables 
 from sqlalchemy.orm import relationship
 from .database import Base #the models will extend this base class
 from sqlalchemy.sql.sqltypes import TIMESTAMP

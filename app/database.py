@@ -5,12 +5,12 @@ from urllib.parse import quote_plus
 import psycopg2
 import time
 from psycopg2.extras import RealDictCursor
-from . import models
+from .config import settings 
 
 password = quote_plus("password123")
 
-#SQLALCHEMY_DATABASE_URL = 'postgresql://<username>:<password>@<ip-address/hostname>/<databse_name>' - the basic format of the url
-SQLALCHEMY_DATABASE_URL = f"postgresql://postgres:{password}@localhost/fastapi" #databse connection url using sqlalchemy
+#SQLALCHEMY_DATABASE_URL = f'postgresql://<username>:<password>@<ip-address/hostname>/<databse_name>' - the basic format of the url
+SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.database_username}:{settings.database_password}@{settings.database_hostname}/{settings.database_name}" #databse connection url using sqlalchemy
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL) #responsible for the connection between sqlalchemy and postgres
 
@@ -24,9 +24,6 @@ def get_db(): #the session object is responsible to connect to databse, so every
         yield db
     finally:
         db.close()
-
-
-models.Base.metadata.create_all(bind=engine) #creates the tables once the application restarts(if table not already there) and if its already there it doesnt do anything, sqlalchemy is not capable of updating tables and data
 
 while True:  #to continue trying to connect to the databse until successful
 
