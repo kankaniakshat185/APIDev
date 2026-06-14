@@ -2,6 +2,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from urllib.parse import quote_plus
+import psycopg2
+import time
+from psycopg2.extras import RealDictCursor
+from . import models
 
 password = quote_plus("password123")
 
@@ -20,3 +24,20 @@ def get_db(): #the session object is responsible to connect to databse, so every
         yield db
     finally:
         db.close()
+
+
+models.Base.metadata.create_all(bind=engine) #creates the tables once the application restarts(if table not already there) and if its already there it doesnt do anything, sqlalchemy is not capable of updating tables and data
+
+while True:  #to continue trying to connect to the databse until successful
+
+    try:
+        conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', password='password123',cursor_factory=RealDictCursor) #establishing a connection to the database
+        cursor = conn.cursor()  #cursor is used to execute the commands
+        print("Database connection was succesfull!!")
+        break
+
+    except Exception as error:
+        print("Connecting to database failed")    #except the error if connection failed
+        print("Error: ", error)
+        time.sleep(3)
+ 

@@ -1,42 +1,11 @@
-from fastapi import FastAPI, Response, status, HTTPException, Depends
-from fastapi import Body
-from typing import Optional, List
-from random import randrange
+from fastapi import FastAPI, Depends
 from . import models #import all our models
 from .database import engine, get_db
-import psycopg2
-import time
-from psycopg2.extras import RealDictCursor
 from .database import engine, get_db
 from sqlalchemy.orm import Session #import to create a session in our api endpoint
 from .routers import post, user, auth
 
-
-
-
-
-
-
-models.Base.metadata.create_all(bind=engine) #creates the tables once the application restarts(if table not already there) and if its already there it doesnt do anything, sqlalchemy is not capable of updating tables and data
-
-
-
-
 app = FastAPI()
-
-while True:  #to continue trying to connect to the databse until successful
-
-    try:
-        conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', password='password123',cursor_factory=RealDictCursor) #establishing a connection to the database
-        cursor = conn.cursor()  #cursor is used to execute the commands
-        print("Database connection was succesfull!!")
-        break
-
-    except Exception as error:
-        print("Connecting to database failed")    #except the error if connection failed
-        print("Error: ", error)
-        time.sleep(3)
- 
 
 
 my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1}, {"title": "title of post 2", "content": "content of post 2", "id": 2}]
@@ -50,8 +19,6 @@ def find_post_index(id):
     for i, p in enumerate(my_posts):
         if p['id']==id:
             return i
-
-
 
 
 @app.get("/")

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
+from fastapi import status, HTTPException, Depends, APIRouter
 from ..utils import Hash
 from ..schemas import UserCreate, UserResponse
 from ..database import get_db
