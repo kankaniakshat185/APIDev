@@ -18,6 +18,10 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class Vote(BaseModel):
+        post_id: int
+        dir: int
+        
 class PostBase(BaseModel):
     title: str
     content: str
@@ -33,6 +37,7 @@ class PostResponse(PostBase):
     created_at: datetime
     owner_id: int
     owner: UserResponse
+    votes: Vote
 
     class Config:
         from_attributes = True
@@ -44,3 +49,4 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[int]=None
+
