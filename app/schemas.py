@@ -21,7 +21,7 @@ class UserLogin(BaseModel):
 class Vote(BaseModel):
         post_id: int
         dir: int
-        
+
 class PostBase(BaseModel):
     title: str
     content: str
@@ -36,8 +36,14 @@ class PostResponse(PostBase):
     id: int
     created_at: datetime
     owner_id: int
-    owner: UserResponse
-    votes: Vote
+    owner: UserResponse 
+
+    class Config:
+        from_attributes = True
+
+class PostwithVote(BaseModel):
+    Post: PostResponse
+    votes: int
 
     class Config:
         from_attributes = True

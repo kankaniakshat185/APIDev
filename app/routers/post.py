@@ -1,21 +1,27 @@
 from fastapi import Response, status, HTTPException, Depends, APIRouter
 from typing import List, Optional
-from ..schemas import PostCreate, PostResponse
+from ..schemas import PostCreate, PostResponse, PostwithVote
 from ..database import get_db
 from sqlalchemy.orm.session import Session #import to create a session in our api endpoint
 from .. import models, oauth2 #import all our models
+from sqlalchemy import func
 
 router = APIRouter(
     prefix = "/posts",
     tags=['Posts']
 )
 
-@router.get("/", response_model=List[PostResponse])
+@router.get("/", response_model=List[PostwithVote])
 async def get_posts(db: Session=Depends(get_db), search: Optional[str]="", limit:int=10, skip: int=0):
     # cursor.execute("""SELECT * FROM posts""")
     # posts = cursor.fetchall()
     posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
-    return posts
+
+    results = db.query(models.Post, func.count(models.Vote.posts_id).label("votes")).join(models.Vote, models.Vote.posts_id == models.Post.id, isouter=True).group_by(models.Post.id).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+
+    print(results[0]._mapping.keys())
+
+    return results
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
 async def create_posts(post: PostCreate, db: Session=Depends(get_db), user: int=Depends(oauth2.get_current_user)):
@@ -29,17 +35,18 @@ async def create_posts(post: PostCreate, db: Session=Depends(get_db), user: int=
     print("Created and added new post")
     return new_post
 
-@router.get("/{id}", response_model=PostResponse)
+@router.get("/{id}", response_model=PostwithVote)
 async def get_post(id: int, response: Response, db: Session=Depends(get_db), user: int=Depends(oauth2.get_current_user)):
     #cursor.execute("""SELECT * FROM posts WHERE id= %s """, (id,)) #using only psycopg driver
     #post=cursor.fetchone() #using only psycopg driver
-    post=db.query(models.Post).filter(models.Post.id==id).first()
+    #post=db.query(models.Post).filter(models.Post.id==id).first()
+    post=db.query(models.Post, func.count(models.Vote.posts_id).label("votes")).join(models.Vote, models.Vote.posts_id == models.Post.id, isouter=True).group_by(models.Post.id).filter(models.Post.id==id).first()
     #print(post)-gives you the raw sql command behind the above query
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
         #response.status_code = status.HTTP_404_NOT_FOUND
         #return {"message": "requested resource not found"}
-    if post.owner_id!=user.id:
+    if post.Post.owner_id!=user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
     return post
 
