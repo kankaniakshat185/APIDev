@@ -28,7 +28,7 @@ def get_db(): #the session object is responsible to connect to databse, so every
 while True:  #to continue trying to connect to the databse until successful
 
     try:
-        conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', password='password123',cursor_factory=RealDictCursor) #establishing a connection to the database
+        conn = psycopg2.connect(host=f"{settings.database_hostname}", database='fastapi', user='postgres', password='password123',cursor_factory=RealDictCursor) #establishing a connection to the database
         cursor = conn.cursor()  #cursor is used to execute the commands
         print("Database connection was succesfull!!")
         break
